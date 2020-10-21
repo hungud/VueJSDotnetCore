@@ -1,22 +1,30 @@
 <template>
-  <div>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="justify-content-between">
+    <nav
+      class="navbar navbar-expand-lg navbar-light bg-light justify-content-center"
+    >
       <!-- Search box -->
-      <div class="container">
-        <div class="main">
+      <div class="flex-column">
+        <div class="d-block position-relative">
           <!-- Actual search box -->
-          <div class="form-group has-search">
-            <span class="form-control-icon-search">
-              <b-icon icon="search" aria-hidden="true"></b-icon>
-            </span>
-            <input
-              id="inputSearch"
-              v-on:click="showSearch()"
-              type="search"
-              class="form-control"
-              placeholder="Search"
-              v-model="filter"
-            />
+          <div class="input-group mt-0 search-group" v-on:click="showSearch()">
+            <div class="input-group-prepend">
+              <span class="material-icons"> search </span>
+            </div>
+            <div class="text-secondary text-elipsis">
+              {{ generageSearchText }}
+            </div>
+            <div class="cancel-button">
+              <button
+                type="button"
+                class="close"
+                aria-label="Close"
+                v-if="typeSearch != 0"
+                v-on:click.stop="changeTypeSearch(0)"
+              >
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>
 
             <!--<span class="form-control-icon-remove" onclick="alert('ok');">
                                                 <b-icon icon="x" aria-hidden="true"></b-icon>
@@ -186,7 +194,7 @@
                             type="checkbox"
                             class="custom-control-input"
                             id="checkStarred"
-                            v-model="advancedSearch.is_starred"
+                            v-model="advancedSearch.isStarred"
                           />
                           <label class="custom-control-label" for="checkStarred"
                             >Starred</label
@@ -199,7 +207,7 @@
                             type="checkbox"
                             class="custom-control-input"
                             id="checkInTrash"
-                            v-model="advancedSearch.is_trash"
+                            v-model="advancedSearch.isTrash"
                           />
                           <label
                             class="custom-control-label"
@@ -216,19 +224,46 @@
                 <div class="form-group d-flex">
                   <div class="col-4 label">Date Modified</div>
                   <div class="col-8">
-                      
+                    <b-form-datepicker
+                      menu-class="w-100"
+                      v-model="advancedSearch.dateModified"
+                      :date-format-optons="{
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                      }"
+                    ></b-form-datepicker>
                   </div>
                 </div>
                 <div class="form-group d-flex">
                   <div class="col-4 label">Modified Between</div>
-                  <div class="col-8"></div>
+                  <div class="col-8">
+                    <b-form-datepicker
+                      menu-class="w-100"
+                      v-model="advancedSearch.dateModifiedFrom"
+                      :date-format-optons="{
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                      }"
+                    ></b-form-datepicker>
+                    <b-form-datepicker
+                      menu-class="w-100"
+                      v-model="advancedSearch.dateModifiedTo"
+                      :date-format-optons="{
+                        year: 'numeric',
+                        month: 'numeric',
+                        day: 'numeric',
+                      }"
+                    ></b-form-datepicker>
+                  </div>
                 </div>
 
                 <div class="form-group d-flex">
                   <div class="col-4 label">Item Name / Title</div>
                   <div class="col-8">
                     <input
-                      v-model="advancedSearch.item_name"
+                      v-model="advancedSearch.itemName"
                       class="form-control"
                       type="text"
                       placeholder="Enter a term that matches part of the field"
@@ -328,12 +363,12 @@ export default {
           name: "Anyone",
           email: "",
         },
-        is_starred: false,
-        is_trash: false,
-        date_modified: 0,
-        modified_from: null,
-        modified_to: null,
-        item_name: "",
+        isStarred: false,
+        isTrash: false,
+        dateModified: null,
+        dateModifiedFrom: null,
+        dateModifiedTo: null,
+        itemName: "",
         words: "",
       },
       rows: [
@@ -376,8 +411,8 @@ export default {
       this.advancedSearch.ownerSpecificPersonSearch.name = name;
       this.advancedSearch.ownerSpecificPersonSearch.email = email;
     },
-    changeDateModified:function(dateModified){
-        this.dateModified = dateModified;
+    changeDateModified: function (dateModified) {
+      this.dateModified = dateModified;
     },
     highlightMatches: function (text) {
       const matchExists = text
@@ -393,6 +428,40 @@ export default {
     },
   },
   computed: {
+    generageSearchText: function () {
+      var search_text = "";
+      if (this.advancedSearch.type == 1) {
+        search_text += "type:site";
+      }
+      if (this.advancedSearch.type == 2) {
+        search_text += "type:page";
+      }
+
+      if (this.advancedSearch.owner == 1) {
+        search_text += " owner:me";
+      }
+      if (this.advancedSearch.owner == 2) {
+        search_text += " !owner:me";
+      }
+      if (this.advancedSearch.ownerSpecificPersonSearch.email != "") {
+        search_text +=
+          " owner:" + this.advancedSearch.ownerSpecificPersonSearch.email;
+      }
+
+      if (this.advancedSearch.isStarred) {
+        search_text += " is:starred";
+      }
+
+      if (this.advancedSearch.isTrash) {
+        search_text += " is:trash";
+      }
+
+      if (this.advancedSearch.words != "") {
+        search_text += " " + this.advancedSearch.words;
+      }
+
+      return search_text == "" ? "Search" : search_text;
+    },
     filteredRows: function () {
       return this.rows.filter((row) => {
         const employees = row.employees.toString().toLowerCase();
@@ -410,78 +479,8 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
-h3 {
-  margin: 40px 0 0;
-}
-
-ul {
-  list-style-type: none;
-  padding: 0;
-}
-
-li {
-  display: inline-block;
-  margin: 0 10px;
-}
-
-a {
-  color: #42b983;
-}
-
-.has-search {
-  display: block;
-  position: relative;
-}
-
-/* Styles for wrapping the search box */
-.main {
-  width: 50%;
-  margin: 50px auto;
-}
-
-/* Bootstrap 4 text input with search icon */
-
-.form-control-icon-search {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 2;
-  display: block;
-  width: 34px;
-  height: 34px;
-  line-height: 34px;
-  text-align: center;
-  pointer-events: none;
-  right: initial;
-  left: 0;
-  color: #000;
-}
-
-.form-control-icon-remove {
-  position: absolute;
-  top: 0;
-  right: 0;
-  z-index: 3;
-  display: block;
-  width: 34px;
-  height: 34px;
-  line-height: 34px;
-  text-align: center;
-  cursor: pointer;
-  right: 0;
-  left: initial;
-  color: #000;
-}
-
-.has-search .form-control {
-  padding-right: 12px;
-  padding-left: 34px;
-}
-
-.has-search .form-control-feedback {
-  right: initial;
-  left: 0;
-  color: #ccc;
+.flex-grow-1 {
+  flex-grow: 1;
 }
 
 /* search-group */
@@ -499,6 +498,7 @@ a {
 }
 
 .search-dropdown {
+  top: 34px;
   font-size: 0.9em;
   position: absolute;
   left: 0;
@@ -535,9 +535,16 @@ a {
 }
 
 .search-dropdown .label {
-  color: #aaa;
+  color: #000;
+  text-align: left;
   padding-top: 5px;
 }
+
+   .cancel-button {
+            position: absolute;
+            right: 13px;
+            top: 5px;
+        }
 
 /* Table */
 
