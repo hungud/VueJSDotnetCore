@@ -1,18 +1,23 @@
 ﻿import Vue from 'vue';
 
 const clickOutside = {
-    bind: function (el, binding, vnode) {
-        this.event = function (event) {
-            if (!(el == event.target || el.contains(event.target))) {
-                vnode.context[binding.expression](event);
-            }
-        };
-        document.body.addEventListener('click', this.event)
+    priority: 700,
+    bind () {
+      let self  = this
+      this.event = function (event) { 
+          self.vm.$emit(self.expression,event) 
+         }
+      this.el.addEventListener('click', this.stopProp)
+      document.body.addEventListener('click',this.event)
     },
-    unbind: function () {
-        document.body.removeEventListener('click', this.event)
-    }
+    
+    unbind() {
+      this.el.removeEventListener('click', this.stopProp)
+      document.body.removeEventListener('click',this.event)
+    },
+    stopProp(event) {event.stopPropagation() }
 };
+
 
 export default {
     clickOutside,

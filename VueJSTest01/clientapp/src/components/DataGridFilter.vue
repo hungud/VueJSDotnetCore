@@ -290,7 +290,7 @@
                       <button
                         type="button"
                         class="btn btn-raised btn-default"
-                        v-on:click="resetAdvencedSearchForm()"
+                        v-on:click="resetAdvancedSearchForm()"
                       >
                         Reset
                       </button>
@@ -414,6 +414,25 @@ export default {
     changeDateModified: function (dateModified) {
       this.dateModified = dateModified;
     },
+    resetAdvancedSearchForm: function () {
+      this.advancedSearch = {
+        typeSearch: 0,
+        typeName: "All types",
+        typeOwnerSearch: 0,
+        typeOwnerName: "Anyone",
+        ownerSpecificPersonSearch: {
+          name: "Anyone",
+          email: "",
+        },
+        isStarred: false,
+        isTrash: false,
+        dateModified: null,
+        dateModifiedFrom: null,
+        dateModifiedTo: null,
+        itemName: "",
+        words: "",
+      };
+    },
     highlightMatches: function (text) {
       const matchExists = text
         .toLowerCase()
@@ -427,20 +446,25 @@ export default {
       );
     },
   },
+  events: {
+    hideSearchEvent: function () {
+      this.hideSearch();
+    },
+  },
   computed: {
     generageSearchText: function () {
       var search_text = "";
-      if (this.advancedSearch.type == 1) {
+      if (this.advancedSearch.typeSearch == 1) {
         search_text += "type:site";
       }
-      if (this.advancedSearch.type == 2) {
+      if (this.advancedSearch.typeSearch == 2) {
         search_text += "type:page";
       }
 
-      if (this.advancedSearch.owner == 1) {
+      if (this.advancedSearch.typeOwnerSearch == 1) {
         search_text += " owner:me";
       }
-      if (this.advancedSearch.owner == 2) {
+      if (this.advancedSearch.typeOwnerSearch == 2) {
         search_text += " !owner:me";
       }
       if (this.advancedSearch.ownerSpecificPersonSearch.email != "") {
@@ -540,11 +564,11 @@ export default {
   padding-top: 5px;
 }
 
-   .cancel-button {
-            position: absolute;
-            right: 13px;
-            top: 5px;
-        }
+.cancel-button {
+  position: absolute;
+  right: 13px;
+  top: 5px;
+}
 
 /* Table */
 
