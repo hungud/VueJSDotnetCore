@@ -9,15 +9,18 @@
                         <div class="input-group-prepend">
                             <span class="material-icons"> search </span>
                         </div>
-                        <div class="text-secondary text-elipsis">
-                            {{ generageSearchText }}
-                        </div>
+
+                        <input class="text-secondary text-elipsis"
+                               v-on:click.stop="showSearch"
+                               v-on:blur="processInputAdvancedSearch"
+                               v-model="searchTerm" />
+
                         <div class="cancel-button">
                             <button type="button"
                                     class="close"
                                     aria-label="Close"
-                                    v-if="typeSearch != 0"
-                                    v-on:click.stop="changeTypeSearch(0)">
+                                    v-if="typeSearch != 0 || searchTerm.length > 0"
+                                    v-on:click.stop="clearSearch()">
                                 <span aria-hidden="true">&times;</span>
                             </button>
                         </div>
@@ -43,7 +46,8 @@
                                v-on:click.stop="changeTypeSearch(3)">Advanced Search</a>
                             <!-- result type 1 -->
                             <div class="advanced-form-result" v-if="typeSearch == 1 || typeSearch == 2">
-                                <a v-for="(row, index) in websitePagesFiltered" :key="`${row.id}`">
+                                <a v-on:click.stop="applyTypeSearch(row)"
+                                   v-for="(row, index) in websitePagesFiltered" :key="`${row.id}`">
                                     <i :data-index="index" class="material-icons">list_alt</i>
                                     <span class="pagename">{{ row.name }} </span>
                                     <span style="margin-left:5px;" v-if="typeSearch == 1">Site</span>
@@ -105,9 +109,6 @@
                                         </div>
                                     </div>
                                     <div class="form-group d-flex"
-
-
-
                                          v-if="advancedSearch.typeOwnerSearch == 3">
                                         <div class="col-4 label">Person</div>
                                         <div class="col-8">
@@ -264,7 +265,7 @@
                         </td>
                         <td>
                             {{ row.owner.fullName }} <br />
-                            {{ row.owner.email }} 
+                            {{ row.owner.email }}
                         </td>
                     </tr>
                 </tbody>
@@ -289,13 +290,16 @@
         data: function () {
             return {
                 isSearchShow: false,
-                filter: "",
                 typeSearch: 0,
+                siteSearch: null,
+                pageSearch: null,
                 advancedSearch: {
                     typeSearch: 0,
                     typeName: "All types",
                     typeOwnerSearch: 0,
                     typeOwnerName: "Anyone",
+                    siteSearch: null,
+                    pageSearch: null,
                     ownerSpecificPersonSearch: {
                         id: null,
                         fullName: "Anyone",
@@ -311,14 +315,37 @@
                 },
                 websitePages: [],
                 websitePageAccounts: [],
+                searchTerm: ''
             };
         },
         methods: {
+            clearSearch: function () {
+                this.isSearchShow = false;
+                this.advancedSearch.applySearch = false;
+                this.searchTerm = '';
+                this.typeSearch = 0;
+                this.siteSearch = null;
+                this.pageSearch = null;
+            },
             hideSearch: function () {
                 this.isSearchShow = false;
             },
             showSearch: function () {
                 this.isSearchShow = true;
+            },
+            applyTypeSearch: function (row) {
+
+                if (this.typeSearch == 1) {
+                    this.siteSearch = row;
+                }
+                else if (this.typeSearch == 2) {
+                    this.pageSearch = row;
+                }
+                this.isSearchShow = false;
+
+                //
+                this.generageSearchText();
+
             },
             changeTypeSearch: function (type) {
                 this.advancedSearch.applySearch = false;
@@ -326,19 +353,23 @@
                 if (type == 3) {
                     this.GetListWebsitePageAccount();
                 }
+                this.generageSearchText();
             },
             changeTypeAdvancedSearch: function (type, typeName) {
                 this.advancedSearch.typeSearch = type;
                 this.advancedSearch.typeName = typeName;
+                this.generageSearchText();
             },
             changeTypeOwnerSearch: function (type, typeName) {
                 this.advancedSearch.typeOwnerSearch = type;
                 this.advancedSearch.typeOwnerName = typeName;
+                this.generageSearchText();
             },
             changeOwnerSpecificPersonSearch: function (id, fullName, email) {
                 this.advancedSearch.ownerSpecificPersonSearch.id = id;
                 this.advancedSearch.ownerSpecificPersonSearch.fullName = fullName;
                 this.advancedSearch.ownerSpecificPersonSearch.email = email;
+                this.generageSearchText();
             },
             changeDateModified: function (dateModified) {
                 this.dateModified = dateModified;
@@ -363,6 +394,7 @@
                     words: "",
                     applySearch: false
                 };
+                this.generageSearchText();
             },
             submitAdvancedSearchForm: function () {
                 this.advancedSearch.applySearch = true;
@@ -398,21 +430,20 @@
                 // console.log(data);
                 // example response: { id: 1, name: "something" }
                 this.websitePages = data;
-            }
-        },
-        events: {
-            hideSearchEvent: function () {
-                this.hideSearch();
             },
-        },
-        computed: {
             generageSearchText: function () {
                 var search_text = "";
-                if (this.advancedSearch.typeSearch == 1) {
+                if (this.advancedSearch.typeSearch == 1 || this.typeSearch == 1) {
                     search_text += "type:site";
+                    if (this.siteSearch != null) {
+                        search_text += " " + this.siteSearch.name;
+                    }
                 }
-                if (this.advancedSearch.typeSearch == 2) {
+                if (this.advancedSearch.typeSearch == 2 || this.typeSearch == 2) {
                     search_text += "type:page";
+                    if (this.pageSearch != null) {
+                        search_text += " " + this.pageSearch.name;
+                    }
                 }
 
                 if (this.advancedSearch.typeOwnerSearch == 1) {
@@ -438,8 +469,21 @@
                     search_text += " " + this.advancedSearch.words;
                 }
 
-                return search_text == "" ? "Search" : search_text;
+                this.searchTerm = search_text == "" ? "Search" : search_text;
             },
+            processInputAdvancedSearch: function () {
+
+
+
+            }
+        },
+        events: {
+            hideSearchEvent: function () {
+                this.hideSearch();
+            },
+        },
+        computed: {
+
             websitePagesFiltered: function () {
 
                 return this.websitePages.filter((row) => {
@@ -451,8 +495,15 @@
                     var isValid = false;
 
                     //
-                    if (this.typeSearch == 1 || this.typeSearch == 2) {
+                    if (this.typeSearch == 1) {
                         isValid = row.type == this.typeSearch;
+                        if (this.siteSearch != null)
+                            isValid = isValid && this.siteSearch.id == row.id;
+                    }
+                    else if (this.typeSearch == 2) {
+                        isValid = row.type == this.typeSearch;
+                        if (this.pageSearch != null)
+                            isValid = isValid && this.pageSearch.id == row.id;
                     }
                     else if (this.typeSearch == 0) {
                         isValid = true;
@@ -479,7 +530,7 @@
                         isValid = true;
 
                     }
-                    
+
                     return (
                         isValid
                     );
@@ -490,7 +541,7 @@
                 return this.websitePageAccounts.filter((row) => {
 
                     var isValid = true;
-                    isValid = row.id > 0 ? true: false;
+                    isValid = row.id > 0 ? true : false;
 
                     return (
                         isValid
@@ -514,6 +565,14 @@
         padding: 5px;
         box-shadow: 0 0 5px #ccc;
     }
+
+        .search-group > input,
+        .search-group > input:focus {
+            border: none;
+            flex-grow: 1;
+            background: none;
+            outline: none;
+        }
 
     @media (min-width: 1200px) {
         .search-group {
@@ -540,6 +599,7 @@
             padding: 7px 10px;
             color: #555;
             text-decoration: none;
+            cursor: pointer;
         }
 
             .search-dropdown > a .material-icons,
