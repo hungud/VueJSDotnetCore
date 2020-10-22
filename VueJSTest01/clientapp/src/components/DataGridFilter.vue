@@ -11,6 +11,7 @@
                         </div>
 
                         <input class="text-secondary text-elipsis"
+                               placeholder="Search"
                                v-on:click.stop="showSearch"
                                v-on:blur="processInputAdvancedSearch"
                                v-model="searchTerm" />
@@ -400,6 +401,8 @@
                 this.advancedSearch.applySearch = true;
                 this.isSearchShow = false;
                 this.GetListWebsitePage();
+                //
+                this.generageSearchText();
             },
             highlightMatches: function (text) {
                 const matchExists = text
@@ -436,44 +439,103 @@
                 if (this.advancedSearch.typeSearch == 1 || this.typeSearch == 1) {
                     search_text += "type:site";
                     if (this.siteSearch != null) {
-                        search_text += " " + this.siteSearch.name;
+                        search_text += " name: " + this.siteSearch.name;
                     }
                 }
-                if (this.advancedSearch.typeSearch == 2 || this.typeSearch == 2) {
+                else if (this.advancedSearch.typeSearch == 2 || this.typeSearch == 2) {
                     search_text += "type:page";
                     if (this.pageSearch != null) {
-                        search_text += " " + this.pageSearch.name;
+                        search_text += " name: " + this.pageSearch.name;
                     }
                 }
-
-                if (this.advancedSearch.typeOwnerSearch == 1) {
-                    search_text += " owner:me";
-                }
-                if (this.advancedSearch.typeOwnerSearch == 2) {
-                    search_text += " !owner:me";
-                }
-                if (this.advancedSearch.ownerSpecificPersonSearch.email != "") {
-                    search_text +=
-                        " owner:" + this.advancedSearch.ownerSpecificPersonSearch.email;
+                else if (this.advancedSearch.typeSearch == 0 || this.typeSearch == 0) {
+                    search_text += "type:all";
                 }
 
-                if (this.advancedSearch.isStarred) {
-                    search_text += " is:starred";
-                }
+                if (this.typeSearch == 3) {
+                                        
+                    if (this.advancedSearch.typeOwnerSearch == 1) {
+                        search_text += " owner:me";
+                    }
+                    if (this.advancedSearch.typeOwnerSearch == 2) {
+                        search_text += " !owner:me";
+                    }
+                    if (this.advancedSearch.ownerSpecificPersonSearch.email != "") {
+                        search_text +=
+                            " owner:" + this.advancedSearch.ownerSpecificPersonSearch.email;
+                    }
 
-                if (this.advancedSearch.isTrash) {
-                    search_text += " is:trash";
-                }
+                    if (this.advancedSearch.isStarred) {
+                        search_text += " is:starred";
+                    }
 
-                if (this.advancedSearch.words != "") {
-                    search_text += " " + this.advancedSearch.words;
-                }
+                    if (this.advancedSearch.isTrash) {
+                        search_text += " is:trash";
+                    }
 
-                this.searchTerm = search_text == "" ? "Search" : search_text;
+                    if (this.advancedSearch.itemName.length > 0) {
+                        search_text += " name:" + this.advancedSearch.itemName;
+                    }
+
+                    if (this.advancedSearch.words != "") {
+                        search_text += " " + this.advancedSearch.words;
+                    }
+
+                }               
+
+                this.searchTerm = search_text == "" ? "" : search_text;
             },
             processInputAdvancedSearch: function () {
 
+                this.searchTerm = this.searchTerm.toLowerCase();
+                this.searchTerm = this.searchTerm.split('  ').join(' ');
 
+                if (this.searchTerm.indexOf('type:') == 0) {
+
+                    var ary_term = this.searchTerm.split(' ');
+                    var term = '';
+                    if (ary_term[0] == 'type:all') {
+
+                        term = this.searchTerm.replace('type:all', '');
+                        term = term.replace('name:', '');
+                        term = term.trim();
+                        this.typeSearch = 3;
+                        this.advancedSearch.applySearch = true;
+                        this.changeTypeAdvancedSearch(0, 'All types');
+                        this.advancedSearch.itemName = term;
+
+                    }
+                    else if (ary_term[0] == 'type:site') {
+
+                        term = this.searchTerm.replace('type:site', '');
+                        term = term.replace('name:', '');
+                        term = term.trim();
+                        this.typeSearch = 3;
+                        this.advancedSearch.applySearch = true;
+                        this.changeTypeAdvancedSearch(1, 'Sites');
+                        this.advancedSearch.itemName = term;
+
+                    }
+                    else if (ary_term[0] == 'type:page') {
+
+                        term = this.searchTerm.replace('type:page', '');
+                        term = term.replace('name:', '');
+                        term = term.trim();
+                        this.typeSearch = 3;
+                        this.advancedSearch.applySearch = true;
+                        this.changeTypeAdvancedSearch(2, 'Pages');
+                        this.advancedSearch.itemName = term;
+
+                    }
+
+                    // this.GetListWebsitePage();
+
+                }
+                else {
+
+                    this.searchTerm = '';
+
+                }
 
             }
         },
@@ -487,9 +549,6 @@
             websitePagesFiltered: function () {
 
                 return this.websitePages.filter((row) => {
-
-                    //
-                    console.log('websitePages.filter', row, this);
 
                     //
                     var isValid = false;
@@ -514,7 +573,7 @@
 
                         //
                         if (this.advancedSearch.typeSearch == 1 || this.advancedSearch.typeSearch == 2) {
-                            isValid = row.type == this.typeSearch;
+                            isValid = row.type == this.advancedSearch.typeSearch;
                         }
                         else if (this.advancedSearch.typeSearch == 0) {
                             isValid = true;
@@ -523,6 +582,13 @@
                         //
                         if (this.advancedSearch.typeOwnerSearch == 3 && isValid == true) {
                             isValid = row.owner.id == this.advancedSearch.ownerSpecificPersonSearch.id;
+                        }
+                        else if (this.advancedSearch.itemName.length > 0 && isValid == true) {
+                            if (this.advancedSearch.typeSearch == 0 || this.advancedSearch.typeSearch == 1 || this.advancedSearch.typeSearch == 2) {
+                                isValid = row.name.toLowerCase().includes(this.advancedSearch.itemName.toLowerCase());
+                                console.log('itemName', row);
+                                console.log('this.advancedSearch.itemName', this.advancedSearch.itemName);
+                            }                            
                         }
                     }
                     else {
