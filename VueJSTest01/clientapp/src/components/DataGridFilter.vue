@@ -112,18 +112,18 @@
                                         <div class="col-4 label">Person</div>
                                         <div class="col-8">
                                             <!-- ownerSpecificPersonSearch -->
-                                            <b-dropdown :text="advancedSearch.ownerSpecificPersonSearch.fullname"
+                                            <b-dropdown :text="advancedSearch.ownerSpecificPersonSearch.fullName"
                                                         variant="primary">
-                                                <b-dropdown-item v-for="(row, index) in websitePageAccountsFiltered" :key="`${row.id}`"
+                                                <b-dropdown-item v-for="(row) in websitePageAccountsFiltered" :key="`${row.id}`"
                                                                  href="#"
                                                                  v-on:click="
                             changeOwnerSpecificPersonSearch(
-                              row.id,                                              
-                              row.fullname,
+                              row.id,
+                              row.fullName,
                               row.email
                             )
                           ">
-                                                    {{row.fullname}}
+                                                    {{row.fullName}}
                                                 </b-dropdown-item>
                                             </b-dropdown>
                                         </div>
@@ -220,7 +220,8 @@
                                                     v-on:click="resetAdvancedSearchForm()">
                                                 Reset
                                             </button>
-                                            <button type="button" class="btn btn-raised btn-success">
+                                            <button type="button" class="btn btn-raised btn-success"
+                                                    v-on:click="submitAdvancedSearchForm()">
                                                 Search
                                             </button>
                                         </div>
@@ -245,13 +246,13 @@
                     <tr>
                         <th></th>
                         <th>Page Name</th>
-                        <th>Employees</th>
+                        <th>Owner</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(row, index) in websitePagesFiltered" :key="`employee-${index}`">
+                    <tr v-for="(row, index) in websitePagesFiltered" :key="`${row.id}`">
                         <td>
-                            <input type="checkbox" />
+                            <input type="checkbox" :data-index="index" />
                         </td>
                         <td>
 
@@ -262,7 +263,9 @@
 
                         </td>
                         <td>
-                        {{ row.type }}</td>
+                            {{ row.owner.fullName }} <br />
+                            {{ row.owner.email }} 
+                        </td>
                     </tr>
                 </tbody>
             </table>
@@ -281,7 +284,6 @@
         created: function () {
 
             this.GetListWebsitePage();
-            this.GetListWebsitePageAccount();
 
         },
         data: function () {
@@ -296,7 +298,7 @@
                     typeOwnerName: "Anyone",
                     ownerSpecificPersonSearch: {
                         id: null,
-                        fullname: "Anyone",
+                        fullName: "Anyone",
                         email: "",
                     },
                     isStarred: false,
@@ -317,9 +319,13 @@
             },
             showSearch: function () {
                 this.isSearchShow = true;
+                return false;
             },
             changeTypeSearch: function (type) {
                 this.typeSearch = type;
+                if (type == 3) {
+                    this.GetListWebsitePageAccount();
+                }
             },
             changeTypeAdvancedSearch: function (type, typeName) {
                 this.advancedSearch.typeSearch = type;
@@ -329,9 +335,9 @@
                 this.advancedSearch.typeOwnerSearch = type;
                 this.advancedSearch.typeOwnerName = typeName;
             },
-            changeOwnerSpecificPersonSearch: function (id, fullname, email) {
+            changeOwnerSpecificPersonSearch: function (id, fullName, email) {
                 this.advancedSearch.ownerSpecificPersonSearch.id = id;
-                this.advancedSearch.ownerSpecificPersonSearch.fullname = fullname;
+                this.advancedSearch.ownerSpecificPersonSearch.fullName = fullName;
                 this.advancedSearch.ownerSpecificPersonSearch.email = email;
             },
             changeDateModified: function (dateModified) {
@@ -344,7 +350,8 @@
                     typeOwnerSearch: 0,
                     typeOwnerName: "Anyone",
                     ownerSpecificPersonSearch: {
-                        name: "Anyone",
+                        id: null,
+                        fullName: "Anyone",
                         email: "",
                     },
                     isStarred: false,
@@ -355,6 +362,11 @@
                     itemName: "",
                     words: "",
                 };
+            },
+            submitAdvancedSearchForm: function () {
+                this.advancedSearch.typeSearch = 3;
+                this.isSearchShow = false;
+                return false;
             },
             highlightMatches: function (text) {
                 const matchExists = text
@@ -439,6 +451,15 @@
                     else if (this.typeSearch == 0) {
                         isValid = true;
                     }
+                    else if (this.typeSearch == 3) {
+                        isValid = true;
+                        if (this.typeOwnerSearch == 3) {
+                            isValid = false;
+                            if (row.owner.id == this.advancedSearch.ownerSpecificPersonSearch.id) {
+                                isValid = true;
+                            }
+                        }
+                    }                    
                     
                     return (
                         isValid
@@ -450,6 +471,7 @@
                 return this.websitePageAccounts.filter((row) => {
 
                     var isValid = true;
+                    isValid = row.id > 0 ? true: false;
 
                     return (
                         isValid
