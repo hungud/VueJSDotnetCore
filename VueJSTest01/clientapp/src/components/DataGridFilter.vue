@@ -112,17 +112,18 @@
                                         <div class="col-4 label">Person</div>
                                         <div class="col-8">
                                             <!-- ownerSpecificPersonSearch -->
-                                            <b-dropdown :text="advancedSearch.ownerSpecificPersonSearch.name"
+                                            <b-dropdown :text="advancedSearch.ownerSpecificPersonSearch.fullname"
                                                         variant="primary">
                                                 <b-dropdown-item v-for="(row, index) in websitePageAccountsFiltered" :key="`${row.id}`"
                                                                  href="#"
                                                                  v-on:click="
                             changeOwnerSpecificPersonSearch(
-                              row.name,
+                              row.id,                                              
+                              row.fullname,
                               row.email
                             )
                           ">
-                                                    {{row.name}}
+                                                    {{row.fullname}}
                                                 </b-dropdown-item>
                                             </b-dropdown>
                                         </div>
@@ -294,7 +295,8 @@
                     typeOwnerSearch: 0,
                     typeOwnerName: "Anyone",
                     ownerSpecificPersonSearch: {
-                        name: "Anyone",
+                        id: null,
+                        fullname: "Anyone",
                         email: "",
                     },
                     isStarred: false,
@@ -327,8 +329,9 @@
                 this.advancedSearch.typeOwnerSearch = type;
                 this.advancedSearch.typeOwnerName = typeName;
             },
-            changeOwnerSpecificPersonSearch: function (name, email) {
-                this.advancedSearch.ownerSpecificPersonSearch.name = name;
+            changeOwnerSpecificPersonSearch: function (id, fullname, email) {
+                this.advancedSearch.ownerSpecificPersonSearch.id = id;
+                this.advancedSearch.ownerSpecificPersonSearch.fullname = fullname;
                 this.advancedSearch.ownerSpecificPersonSearch.email = email;
             },
             changeDateModified: function (dateModified) {
