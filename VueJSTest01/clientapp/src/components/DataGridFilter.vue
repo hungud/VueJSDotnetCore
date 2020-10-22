@@ -501,8 +501,10 @@
                         term = term.trim();
                         this.typeSearch = 3;
                         this.advancedSearch.applySearch = true;
-                        this.changeTypeAdvancedSearch(0, 'All types');
+                        this.advancedSearch.typeSearch = 0;
+                        this.advancedSearch.typeName = 'All types';
                         this.advancedSearch.itemName = term;
+
 
                     }
                     else if (ary_term[0] == 'type:site') {
@@ -511,8 +513,9 @@
                         term = term.replace('name:', '');
                         term = term.trim();
                         this.typeSearch = 3;
-                        this.advancedSearch.applySearch = true;
-                        this.changeTypeAdvancedSearch(1, 'Sites');
+                        this.advancedSearch.applySearch = true;                        
+                        this.advancedSearch.typeSearch = 1;
+                        this.advancedSearch.typeName = 'Sites';
                         this.advancedSearch.itemName = term;
 
                     }
@@ -523,12 +526,11 @@
                         term = term.trim();
                         this.typeSearch = 3;
                         this.advancedSearch.applySearch = true;
-                        this.changeTypeAdvancedSearch(2, 'Pages');
+                        this.advancedSearch.typeSearch = 2;
+                        this.advancedSearch.typeName = 'Pages';
                         this.advancedSearch.itemName = term;
 
                     }
-
-                    // this.GetListWebsitePage();
 
                 }
                 else {
