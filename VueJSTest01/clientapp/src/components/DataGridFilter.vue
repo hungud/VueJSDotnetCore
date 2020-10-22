@@ -5,7 +5,7 @@
             <div class="flex-column">
                 <div class="d-block position-relative">
                     <!-- Actual search box -->
-                    <div class="input-group mt-0 search-group" v-on:click="showSearch()">
+                    <div class="input-group mt-0 search-group" v-on:click.stop="showSearch()">
                         <div class="input-group-prepend">
                             <span class="material-icons"> search </span>
                         </div>
@@ -30,17 +30,17 @@
                         <div class="search-dropdown" v-if="isSearchShow">
                             <a href="#"
                                v-if="typeSearch == 0"
-                               v-on:click="changeTypeSearch(1)">
+                               v-on:click.stop="changeTypeSearch(1)">
                                 <i class="material-icons">list_alt</i> Sites
                             </a>
                             <a href="#"
                                v-if="typeSearch == 0"
-                               v-on:click="changeTypeSearch(2)">
+                               v-on:click.stop="changeTypeSearch(2)">
                                 <i class="material-icons">list_alt</i> Pages
                             </a>
                             <a href="#"
                                v-if="typeSearch == 0"
-                               v-on:click="changeTypeSearch(3)">Advanced Search</a>
+                               v-on:click.stop="changeTypeSearch(3)">Advanced Search</a>
                             <!-- result type 1 -->
                             <div class="advanced-form-result" v-if="typeSearch == 1 || typeSearch == 2">
                                 <a v-for="(row, index) in websitePagesFiltered" :key="`${row.id}`">
@@ -61,15 +61,15 @@
                                                         menu-class="w-100"
                                                         variant="primary">
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="changeTypeAdvancedSearch(0, 'All types')">
+                                                                 v-on:click.stop="changeTypeAdvancedSearch(0, 'All types')">
                                                     All types
                                                 </b-dropdown-item>
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="changeTypeAdvancedSearch(1, 'Sites')">
+                                                                 v-on:click.stop="changeTypeAdvancedSearch(1, 'Sites')">
                                                     Sites
                                                 </b-dropdown-item>
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="changeTypeAdvancedSearch(2, 'Pages')">
+                                                                 v-on:click.stop="changeTypeAdvancedSearch(2, 'Pages')">
                                                     Pages
                                                 </b-dropdown-item>
                                             </b-dropdown>
@@ -82,21 +82,21 @@
                                             <b-dropdown :text="advancedSearch.typeOwnerName"
                                                         variant="primary">
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="changeTypeOwnerSearch(0, 'All types')">
+                                                                 v-on:click.stop="changeTypeOwnerSearch(0, 'All types')">
                                                     All types
                                                 </b-dropdown-item>
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="changeTypeOwnerSearch(1, 'Owned by me')">
+                                                                 v-on:click.stop="changeTypeOwnerSearch(1, 'Owned by me')">
                                                     Owned by me
                                                 </b-dropdown-item>
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="
+                                                                 v-on:click.stop="
                             changeTypeOwnerSearch(2, 'Not owned by me')
                           ">
                                                     Not owned by me
                                                 </b-dropdown-item>
                                                 <b-dropdown-item href="#"
-                                                                 v-on:click="
+                                                                 v-on:click.stop="
                             changeTypeOwnerSearch(3, 'Specific person...')
                           ">
                                                     Specific person...
@@ -116,7 +116,7 @@
                                                         variant="primary">
                                                 <b-dropdown-item v-for="(row) in websitePageAccountsFiltered" :key="`${row.id}`"
                                                                  href="#"
-                                                                 v-on:click="
+                                                                 v-on:click.stop="
                             changeOwnerSpecificPersonSearch(
                               row.id,
                               row.fullName,
@@ -217,11 +217,11 @@
                                         <div class="col-12">
                                             <button type="button"
                                                     class="btn btn-raised btn-default"
-                                                    v-on:click="resetAdvancedSearchForm()">
+                                                    v-on:click.stop="resetAdvancedSearchForm()">
                                                 Reset
                                             </button>
                                             <button type="button" class="btn btn-raised btn-success"
-                                                    v-on:click="submitAdvancedSearchForm()">
+                                                    v-on:click.stop="submitAdvancedSearchForm()">
                                                 Search
                                             </button>
                                         </div>
@@ -319,9 +319,9 @@
             },
             showSearch: function () {
                 this.isSearchShow = true;
-                return false;
             },
             changeTypeSearch: function (type) {
+                this.advancedSearch.applySearch = false;
                 this.typeSearch = type;
                 if (type == 3) {
                     this.GetListWebsitePageAccount();
@@ -361,12 +361,13 @@
                     dateModifiedTo: null,
                     itemName: "",
                     words: "",
+                    applySearch: false
                 };
             },
             submitAdvancedSearchForm: function () {
-                this.advancedSearch.typeSearch = 3;
+                this.advancedSearch.applySearch = true;
                 this.isSearchShow = false;
-                return false;
+                this.GetListWebsitePage();
             },
             highlightMatches: function (text) {
                 const matchExists = text
@@ -443,23 +444,41 @@
 
                 return this.websitePages.filter((row) => {
 
+                    //
+                    console.log('websitePages.filter', row, this);
+
+                    //
                     var isValid = false;
 
+                    //
                     if (this.typeSearch == 1 || this.typeSearch == 2) {
                         isValid = row.type == this.typeSearch;
                     }
                     else if (this.typeSearch == 0) {
                         isValid = true;
                     }
-                    else if (this.typeSearch == 3) {
-                        isValid = true;
-                        if (this.typeOwnerSearch == 3) {
-                            isValid = false;
-                            if (row.owner.id == this.advancedSearch.ownerSpecificPersonSearch.id) {
-                                isValid = true;
-                            }
+
+                    // Advanced Form
+                    else if (this.typeSearch == 3 && this.advancedSearch.applySearch == true) {
+
+                        //
+                        if (this.advancedSearch.typeSearch == 1 || this.advancedSearch.typeSearch == 2) {
+                            isValid = row.type == this.typeSearch;
                         }
-                    }                    
+                        else if (this.advancedSearch.typeSearch == 0) {
+                            isValid = true;
+                        }
+
+                        //
+                        if (this.advancedSearch.typeOwnerSearch == 3 && isValid == true) {
+                            isValid = row.owner.id == this.advancedSearch.ownerSpecificPersonSearch.id;
+                        }
+                    }
+                    else {
+
+                        isValid = true;
+
+                    }
                     
                     return (
                         isValid
